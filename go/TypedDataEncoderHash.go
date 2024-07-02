@@ -3,6 +3,7 @@ package txhash
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -12,12 +13,14 @@ import (
 func typedDataEncoderHash(data apitypes.TypedData) (string, error) {
 	domain, err := data.HashStruct("EIP712Domain", data.Domain.Map())
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("domain hash error: %v", err)
 	}
 	dataHash, err := data.HashStruct(data.PrimaryType, data.Message)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("data hash error: %v", err)
 	}
+
+	//fmt.Printf("domain: %s\ndataHash: %s\n", common.Bytes2Hex(domain), common.Bytes2Hex(dataHash))
 
 	prefixedData := []byte(fmt.Sprintf("\x19\x01%s%s", string(domain), string(dataHash)))
 	prefixedDataHash := crypto.Keccak256(prefixedData)
@@ -26,14 +29,17 @@ func typedDataEncoderHash(data apitypes.TypedData) (string, error) {
 
 func TypedDataEncoderHash(jsonData string) string {
 	var typedData apitypes.TypedData
-	if err := json.Unmarshal([]byte(jsonData), &typedData); err != nil {
-		panic(err)
+	jData := JsonDataProcess(jsonData)
+	if err := json.Unmarshal([]byte(jData), &typedData); err != nil {
+		log.Fatalf("unmarshal error: %v", err)
 	}
 
-	data, err := typedDataEncoderHash(typedData)
+	typeencodehash, err := typedDataEncoderHash(typedData)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatalf("hash error: %v", err)
 	}
 
-	return data
+	//fmt.Println(data)
+	return typeencodehash
+
 }

@@ -3,7 +3,9 @@ package txhash
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 )
 
@@ -13,19 +15,20 @@ func hashDomain(data apitypes.TypedData) (string, error) {
 		return "", err
 	}
 
-	return domain.String(), err
+	return "0x" + common.Bytes2Hex(domain), err
 }
 
 func HashDomain(jsonData string) string {
 	var typedData apitypes.TypedData
-	if err := json.Unmarshal([]byte(jsonData), &typedData); err != nil {
-		panic(err)
+	jData := JsonDataProcess(jsonData)
+	if err := json.Unmarshal([]byte(jData), &typedData); err != nil {
+		log.Fatalf("unmarshal error: %v", err)
 	}
 
-	data, err := hashDomain(typedData)
+	domain, err := hashDomain(typedData)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	return data
+	return domain
 }
